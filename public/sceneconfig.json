@@ -1,0 +1,130 @@
+{
+  "environment": {
+    "modelPath": "/models/gaming_room.glb",
+    "position": [0, 0, 0],
+    "scale": 0.1,
+    "rotation": [0, 0, 0]
+  },
+  "camera": {
+    "height": 1,
+    "initialYaw": 220,
+    "maxYaw": 240,
+    "minYaw": 200,
+    "overshootYaw": 100,
+    "initialPitch": 20,
+    "maxPitch": 30,
+    "minPitch": 15,
+    "overshootPitch": 20,
+    "initialDistance": 2,
+    "minDistance": 1.7,
+    "maxDistance": 2,
+    "sensitivity": 0.01,
+    "fov": 110
+  },
+  "lighting": {
+    "keyLight": {
+      "color": "0xffffff",
+      "intensity": 1.1,
+      "position": [5, 8, 6],
+      "castShadow": true,
+      "shadowMapSize": 2048
+    },
+    "fillLight": {
+      "color": "0x88aaff",
+      "intensity": 0.5,
+      "position": [-6, 4, 4]
+    },
+    "rimLight": {
+      "color": "0xffeecc",
+      "intensity": 0.4,
+      "position": [0, 6, -8]
+    },
+    "ambient": {
+      "color": "0xffffff",
+      "intensity": 0.25
+    },
+    "shadows": {
+      "enabled": true,
+      "shadowMapSize": 2048
+    }
+  },
+  "vfx": {
+    "slideSpacing": 2.5,
+    "systems": [
+      {
+        "type": "explosion",
+        "name": "Large Explosion",
+        "properties": {
+          "position": [0, 1.0, 0],
+          "radius": 0.1,
+          "lifetime": 1.0,
+          "size": 0.1
+        }
+      },
+      {
+        "type": "explosion",
+        "name": "Small Explosion",
+        "properties": {
+          "position": [0, 1.0, 0],
+          "radius": 0,
+          "lifetime": 0.5,
+          "size": 0.01
+        }
+      },
+      {
+        "type": "smoke",
+        "name": "Smoke Cloud",
+        "properties": {
+          "position": [0, 1.0, 0],
+          "radius": 0.05,
+          "lifetime": 6,
+          "size": 0.2
+        }
+      }
+    ]
+  },
+  "walls": {
+    "wall1": {
+      "position": [-0.75, 1, -2.4],
+      "size": [4, 3, 0.1],
+      "color": "#444488",
+      "rotation": [0, 0, 0],
+      "castShadow": true,
+      "receiveShadow": true
+    },
+    "wall2": {
+      "position": [-2.7, 1, 0],
+      "size": [0.1, 4, 6],
+      "color": "#884444",
+      "rotation": [0, 0, 0],
+      "castShadow": true,
+      "receiveShadow": true
+    },
+    "wall3": {
+      "position": [0, 2.5, 0],
+      "size": [10, 0.1, 10],
+      "color": "#884444",
+      "rotation": [0, 0, 0],
+      "castShadow": true,
+      "receiveShadow": true
+    }
+  },
+  "sceneParticleSystems": [
+    {
+      "type": "dust",
+      "volume": {
+        "min": { "x": -2, "y": 0.2, "z": -2 },
+        "max": { "x": 2, "y": 2.2, "z": 2 }
+      },
+      "count": 50,
+      "color": "#ffffff",
+      "size": 0.01,
+      "speed": 0.003
+    }
+  ],
+  "fog": {
+    "color": "#ffffff",
+    "near": 2.5,
+    "far": 6
+  }
+}
