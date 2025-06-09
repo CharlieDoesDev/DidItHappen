@@ -3,24 +3,9 @@ import "./style.css";
 import * as THREE from "three";
 import { WebGLRenderer } from "three";
 import { createBasicScene } from "./lib/scene.js";
-import { ParticleSystem } from "./lib/particle-base.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { setupWorld } from "./world.js";
 import { CameraManager } from "./cameraManager.js";
-
-// Import each VFX subclass instead of factory functions:
-import { ExplosionSystem } from "./vfx/explosion.js";
-import { FountainSystem } from "./vfx/fountain.js";
-import { FireworkSystem } from "./vfx/firework.js";
-import { SmokeSystem } from "./vfx/smoke.js";
-import { StarburstSystem } from "./vfx/starburst.js";
-import { RingTrailSystem } from "./vfx/ringtrail.js";
-
-import MeshParticleSystem, {
-  DustParticleSystem,
-} from "./vfx/meshParticleSystem.js";
-
-import sceneConfig from "../public/sceneconfig.json";
 
 // -----------------------------------------------------------------------------
 // Helper: load scene configuration from disk (or fallback to defaults).
@@ -47,7 +32,7 @@ async function loadConfig() {
         maxPitch: 30,
         minPitch: -30,
         sensitivity: 0.01,
-        fov: 75,
+        fov: 90,
       },
       lighting: {
         keyLight: {
@@ -76,68 +61,6 @@ async function loadConfig() {
           shadowMapSize: 2048,
         },
       },
-      vfx: {
-        slideSpacing: 2.5,
-        systems: [
-          {
-            type: "explosion",
-            name: "Large Explosion",
-            properties: {
-              position: [0, 1.0, 0],
-              radius: 1,
-              size: 1.0,
-            },
-          },
-          {
-            type: "explosion",
-            name: "Small Explosion",
-            properties: {
-              position: [0, 1.0, 0],
-              radius: 0.2,
-              size: 0.01,
-            },
-          },
-        ],
-      },
-      walls: {
-        wall1: {
-          position: [-0.75, 1, -2.4],
-          size: [4, 3, 0.1],
-          color: "#444488",
-          rotation: [0, 0, 0],
-          castShadow: true,
-          receiveShadow: true,
-        },
-        wall2: {
-          position: [-2.7, 1, 0],
-          size: [0.1, 4, 6],
-          color: "#884444",
-          rotation: [0, 0, 0],
-          castShadow: true,
-          receiveShadow: true,
-        },
-        wall3: {
-          position: [0, 2.5, 0],
-          size: [10, 0.1, 10],
-          color: "#884444",
-          rotation: [0, 0, 0],
-          castShadow: true,
-          receiveShadow: true,
-        },
-      },
-      sceneParticleSystems: [
-        {
-          type: "dust",
-          volume: {
-            min: { x: -2, y: 0.2, z: -2 },
-            max: { x: 2, y: 2.2, z: 2 },
-          },
-          count: 50,
-          color: "#ffffff",
-          size: 0.01,
-          speed: 0.003,
-        },
-      ],
       fog: {
         color: "#222233",
         near: 2,
@@ -161,24 +84,6 @@ async function main() {
   app.style.cssText =
     "width:100vw;height:100vh;margin:0;padding:0;overflow:hidden;position:relative;";
 
-  // 3) Slideshow navigation buttons
-  const leftBtn = document.createElement("button");
-  leftBtn.textContent = "◀";
-  leftBtn.style.cssText =
-    "position:absolute;left:20px;top:50%;z-index:20;font-size:2rem;" +
-    "background:rgba(0,0,0,0.5);color:white;border:none;border-radius:50%;" +
-    "width:48px;height:48px;transform:translateY(-50%);cursor:pointer;";
-  app.appendChild(leftBtn);
-
-  const rightBtn = document.createElement("button");
-  rightBtn.textContent = "▶";
-  rightBtn.style.cssText =
-    "position:absolute;right:20px;top:50%;z-index:20;font-size:2rem;" +
-    "background:rgba(0,0,0,0.5);color:white;border:none;border-radius:50%;" +
-    "width:48px;height:48px;transform:translateY(-50%);cursor:pointer;";
-  app.appendChild(rightBtn);
-
-  // 4) Create canvas and add to page
   const canvas = document.createElement("canvas");
   canvas.style.cssText =
     "width:100vw;height:100vh;display:block;position:absolute;top:0;left:0;z-index:1;";
@@ -196,7 +101,7 @@ async function main() {
     }
   });
 
-  // 7) Load environment GLB
+  // 7) Load environment GLB (Earth)
   const gltfLoader = new GLTFLoader();
   gltfLoader.load(config.environment.modelPath, (gltf) => {
     const env = gltf.scene;
@@ -220,23 +125,6 @@ async function main() {
       }
     });
     scene.add(env);
-
-    // Add one DustParticleSystem for room ambience
-    let roomMesh = null;
-    env.traverse((obj) => {
-      if (obj.isMesh && !roomMesh) roomMesh = obj;
-    });
-    if (roomMesh) {
-      const dust = new DustParticleSystem(roomMesh, {
-        count: 1200,
-        color: 0xffffff,
-        size: 0.04,
-        speed: 0.003,
-      });
-      scene.add(dust.points);
-      if (!window._dustSystems) window._dustSystems = [];
-      window._dustSystems.push(dust);
-    }
   });
 
   // 8) Set up lighting
@@ -306,157 +194,21 @@ async function main() {
     renderer.setClearColor(config.fog.color || 0x222233);
   }
 
-  // ---------------------------------------------------------------------------
-  // Build a registry that maps "type" strings → the corresponding class
-  // ---------------------------------------------------------------------------
-  const VFX_REGISTRY = {
-    explosion: ExplosionSystem,
-    fountain: FountainSystem,
-    firework: FireworkSystem,
-    smoke: SmokeSystem,
-    starburst: StarburstSystem,
-    ringtrail: RingTrailSystem,
-    // (add new systems here as needed)
-  };
-
-  // ---------------------------------------------------------------------------
-  // Instantiate each VFX from sceneConfig.vfx.systems
-  // ---------------------------------------------------------------------------
-  const vfxSystemsConfig = sceneConfig.vfx?.systems || [];
-  const vfxNames = vfxSystemsConfig.map((s) => s.name);
-  const particleSystems = vfxSystemsConfig.map((entry) => {
-    const Cls = VFX_REGISTRY[entry.type];
-    if (!Cls) {
-      throw new Error(`Unknown VFX type "${entry.type}" in JSON`);
-    }
-    // Merge entry.properties into one flat object:
-    const props = entry.properties || {};
-    // Ensure position is a Vector3 or `[x,y,z]`:
-    if (Array.isArray(props.position)) {
-      props.position = new THREE.Vector3(...props.position);
-    }
-    return new Cls(props);
-  });
-
-  // 11) Set up captions for each VFX
-  const captions = vfxNames.map((name, i) => {
-    const caption = document.createElement("div");
-    caption.textContent = name;
-    caption.style.cssText =
-      "position:absolute;left:50%;top:80%;" +
-      "transform:translate(-50%,0);z-index:10;font-size:1.5rem;" +
-      "color:white;text-shadow:0 2px 8px #000;opacity:0;" +
-      "pointer-events:none;transition:opacity 0.3s;display:none;";
-    app.appendChild(caption);
-    return caption;
-  });
-
-  let selectedIndex = Math.floor(particleSystems.length / 2);
-
-  function showOnlySelectedSystem() {
-    // Remove all systems from scene
-    for (let i = 0; i < particleSystems.length; i++) {
-      const sys = particleSystems[i];
-      sys.removeFromScene?.(scene) ?? scene.remove(sys.points);
-    }
-    // Add only the selected one
-    const chosen = particleSystems[selectedIndex];
-    chosen.addToScene?.(scene) ?? scene.add(chosen.points);
-
-    // Update captions
-    captions.forEach((cap, idx) => {
-      if (idx === selectedIndex) {
-        cap.style.display = "block";
-        cap.style.opacity = "1";
-      } else {
-        cap.style.opacity = "0";
-        cap.style.display = "none";
-      }
-    });
-  }
-
-  // Initial display
-  showOnlySelectedSystem();
-
-  // 12) Navigation button handlers
-  leftBtn.onclick = () => {
-    selectedIndex =
-      (selectedIndex - 1 + particleSystems.length) % particleSystems.length;
-    showOnlySelectedSystem();
-  };
-  rightBtn.onclick = () => {
-    selectedIndex = (selectedIndex + 1) % particleSystems.length;
-    showOnlySelectedSystem();
-  };
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowLeft") {
-      selectedIndex =
-        (selectedIndex - 1 + particleSystems.length) % particleSystems.length;
-      showOnlySelectedSystem();
-    } else if (e.key === "ArrowRight") {
-      selectedIndex = (selectedIndex + 1) % particleSystems.length;
-      showOnlySelectedSystem();
-    }
-  });
-
-  // 13) Camera manager
+  // 11) Camera manager
   const cameraManager = new CameraManager(
     camera,
     canvas,
     config,
-    () => particleSystems[selectedIndex].position,
+    () => new THREE.Vector3(0, 0, 0), // Always look at Earth's center
     collisionObjects,
     0.25 // camera collision radius
   );
 
-  // 14) Add scene-level particle systems (dust volumes, etc.)
-  if (config.sceneParticleSystems) {
-    for (const psys of config.sceneParticleSystems) {
-      if (psys.type === "dust" && psys.volume) {
-        const dust = new DustParticleSystem(psys.volume, {
-          count: psys.count || 1000,
-          color: psys.color || 0xffffff,
-          size: psys.size || 0.04,
-          speed: psys.speed || 0.003,
-        });
-        scene.add(dust.points);
-        if (!window._dustSystems) window._dustSystems = [];
-        window._dustSystems.push(dust);
-      }
-      // Add more sceneParticleSystems types here if needed
-    }
-  }
-
-  // 15) Style navigation buttons (remove focus outlines)
-  leftBtn.style.outline = "none";
-  leftBtn.style.boxShadow = "none";
-  rightBtn.style.outline = "none";
-  rightBtn.style.boxShadow = "none";
-
-  // ---------------------------------------------------------------------------
-  // Animation loop
-  // ---------------------------------------------------------------------------
+  // 12) Animation loop
   const clock = new THREE.Clock();
 
   function animate() {
     requestAnimationFrame(animate);
-    const deltaTime = clock.getDelta();
-
-    // Update all VFX systems
-    for (const sys of particleSystems) {
-      sys.update?.(deltaTime);
-    }
-    // Update dust systems if any
-    if (window._dustSystems) {
-      for (const d of window._dustSystems) {
-        d.update?.();
-      }
-    }
-
-    // Optionally, smoothly center the selected system at x=0
-    const pos = particleSystems[selectedIndex].position;
-    pos.x += (0 - pos.x) * 0.15;
-
     cameraManager.update();
     renderer.render(scene, camera);
   }

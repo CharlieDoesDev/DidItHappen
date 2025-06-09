@@ -1,25 +1,25 @@
 {
   "environment": {
-    "modelPath": "/models/gaming_room.glb",
-    "position": [0, 0, 0],
-    "scale": 0.1,
+    "modelPath": "/models/earth.glb",
+    "position": [0, -2, 0],
+    "scale": 2.0,
     "rotation": [0, 0, 0]
   },
   "camera": {
-    "height": 1,
-    "initialYaw": 220,
-    "maxYaw": 240,
-    "minYaw": 200,
-    "overshootYaw": 100,
+    "height": 0.0,
+    "initialYaw": 0,
+    "maxYaw": 360,
+    "minYaw": 0,
+    "overshootYaw": 0,
     "initialPitch": 20,
-    "maxPitch": 30,
-    "minPitch": 15,
-    "overshootPitch": 20,
-    "initialDistance": 2,
-    "minDistance": 1.7,
-    "maxDistance": 2,
+    "maxPitch": 0,
+    "minPitch": -300,
+    "overshootPitch": 0,
+    "initialDistance": 20,
+    "minDistance": 0,
+    "maxDistance": 500,
     "sensitivity": 0.01,
-    "fov": 110
+    "fov": 90
   },
   "lighting": {
     "keyLight": {
@@ -83,32 +83,7 @@
       }
     ]
   },
-  "walls": {
-    "wall1": {
-      "position": [-0.75, 1, -2.4],
-      "size": [4, 3, 0.1],
-      "color": "#444488",
-      "rotation": [0, 0, 0],
-      "castShadow": true,
-      "receiveShadow": true
-    },
-    "wall2": {
-      "position": [-2.7, 1, 0],
-      "size": [0.1, 4, 6],
-      "color": "#884444",
-      "rotation": [0, 0, 0],
-      "castShadow": true,
-      "receiveShadow": true
-    },
-    "wall3": {
-      "position": [0, 2.5, 0],
-      "size": [10, 0.1, 10],
-      "color": "#884444",
-      "rotation": [0, 0, 0],
-      "castShadow": true,
-      "receiveShadow": true
-    }
-  },
+  "walls": {},
   "sceneParticleSystems": [
     {
       "type": "dust",
@@ -125,6 +100,6 @@
   "fog": {
     "color": "#ffffff",
     "near": 2.5,
-    "far": 6
+    "far": 600
   }
 }

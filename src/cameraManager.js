@@ -24,8 +24,10 @@ export class CameraManager {
     this.sensitivity = config.camera.sensitivity || 0.01;
     this.minPitch = (config.camera.minPitch || -30) * (Math.PI / 180);
     this.maxPitch = (config.camera.maxPitch || 30) * (Math.PI / 180);
-    this.minDistance = config.camera.minDistance || 2;
-    this.maxDistance = config.camera.maxDistance || 20;
+    this.minDistance = config.camera.minDistance;
+    this.maxDistance = config.camera.maxDistance;
+    // If minDistance > maxDistance, allow any distance (no clamp)
+    this.unclampedDistance = this.minDistance > this.maxDistance;
     this.lerpAlpha = 0.12;
     this.lerpTarget = new THREE.Vector3();
     this.isDragging = false;
@@ -50,10 +52,12 @@ export class CameraManager {
     this.canvas.addEventListener("wheel", (e) => {
       e.preventDefault();
       this.distance += e.deltaY * 0.01;
-      this.distance = Math.max(
-        this.minDistance,
-        Math.min(this.maxDistance, this.distance)
-      );
+      if (!this.unclampedDistance) {
+        this.distance = Math.max(
+          this.minDistance,
+          Math.min(this.maxDistance, this.distance)
+        );
+      }
     });
     this.canvas.addEventListener("pointerdown", (e) => {
       // Allow left mouse or touch
@@ -82,10 +86,25 @@ export class CameraManager {
         this.yaw -= dx * this.sensitivity;
         this.pitch += dy * this.sensitivity;
         // Clamp yaw and pitch with overshoot
+        // Fix: If min > max, allow full rotation (no clamp)
         let minYaw = this.minYaw - this.overshootYaw;
         let maxYaw = this.maxYaw + this.overshootYaw;
         let minPitch = this.minPitch - this.overshootPitch;
         let maxPitch = this.maxPitch + this.overshootPitch;
+
+        // If min > max, disable clamping for that axis
+        if (minYaw > maxYaw) {
+          // No clamp for yaw
+        } else {
+          if (this.yaw < minYaw) this.yaw = minYaw;
+          if (this.yaw > maxYaw) this.yaw = maxYaw;
+        }
+        if (minPitch > maxPitch) {
+          // No clamp for pitch
+        } else {
+          if (this.pitch < minPitch) this.pitch = minPitch;
+          if (this.pitch > maxPitch) this.pitch = maxPitch;
+        }
         // Track overshoot
         if (this.yaw < this.minYaw) {
           this.overshootYawValue = this.yaw - this.minYaw;
@@ -101,8 +120,6 @@ export class CameraManager {
         } else {
           this.overshootPitchValue = 0;
         }
-        this.yaw = Math.max(minYaw, Math.min(maxYaw, this.yaw));
-        this.pitch = Math.max(minPitch, Math.min(maxPitch, this.pitch));
         this.lastMouseX = e.clientX;
         this.lastMouseY = e.clientY;
       }
